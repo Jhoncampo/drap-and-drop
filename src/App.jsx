@@ -1,35 +1,62 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import React, { useEffect, useState } from "react";
 
-function App() {
-  const [count, setCount] = useState(0)
+const initialTodos = JSON.parse(localStorage.getItem("todo")) || [
+    { id: 1, text: "Aprender React" },
+    { id: 2, text: "Aprender Js" },
+    { id: 3, text: "Aprender Next" },
+    { id: 4, text: "Aprender Node" },
+];
+const App = () => {
+    const [todos, setTodos] = useState(initialTodos);
+    useEffect(() => {
+        localStorage.setItem("todo", JSON.stringify(todos));
+        console.log("prueba")
+    }, [todos]);
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    const handleDragEnd = (result) => {
+        if (!result.destination) return;
+        const startIndex = result.source.index;
+        const endIndex = result.destination.index;
 
-export default App
+        const copyArray = [...todos];
+        const [reorderedItem] = copyArray.splice(startIndex, 1);
+        copyArray.splice(endIndex, 0, reorderedItem);
+        setTodos(copyArray)
+    };
+
+    return (
+        <DragDropContext onDragEnd={handleDragEnd}>
+            <h1>Todo app</h1>
+            <Droppable droppableId="todos">
+                {(dropppableProvider) => (
+                    <ul
+                        ref={dropppableProvider.innerRef}
+                        {...dropppableProvider.droppableProps}
+                    >
+                        {todos.map((todo, index) => (
+                            <Draggable
+                                index={index}
+                                key={todo.id}
+                                draggableId={`${todo.id}`}
+                            >
+                                {(draggableProvider) => (
+                                    <li
+                                        ref={draggableProvider.innerRef}
+                                        {...draggableProvider.dragHandleProps}
+                                        {...draggableProvider.draggableProps}
+                                    >
+                                        {todo.text}
+                                    </li>
+                                )}
+                            </Draggable>
+                        ))}
+                        {dropppableProvider.placeholder}
+                    </ul>
+                )}
+            </Droppable>
+        </DragDropContext>
+    );
+};
+
+export default App;
